@@ -12,18 +12,42 @@ The company's infrastructure (AWS, GCP, Azure) is managed by a platform team tha
 
 ---
 
-## Quick Start
+## For Platform Admins: Setting Up Port
 
 ```bash
-# 1. Start the platform (API + Postgres)
-docker compose up -d
+# Clone, configure, and start
+git clone https://github.com/MalconMikami/port.git
+cd port
 
-# 2. Deploy a sample site
-cd cli && npm install
-npx tsx src/index.ts deploy ../sample/site-a
+# Edit .env with your domain and secrets, then:
+docker compose up -d
 ```
 
-Your site is live at `http://site-a.localhost:10000`.
+Port is now running at `http://localhost:10000`. The admin dashboard is at the same URL. See [production.md](docs/production.md) for SSL, domain, and production configuration.
+
+---
+
+## For End Users: Deploying a Site
+
+Port should already be running in your organization. Ask your IT team for the API URL and authentication method.
+
+```bash
+# 1. Install the CLI
+cd cli && npm install
+
+# 2. Configure (optional — defaults to localhost)
+export PORT_API_URL=https://port.yourcompany.com
+
+# 3. Deploy a folder
+npx tsx src/index.ts deploy ./my-site
+
+# 4. Or deploy a ZIP
+npx tsx src/index.ts deploy ./my-site.zip
+```
+
+Your site is live at `https://my-site.yourcompany.com`.
+
+You can also upload a ZIP directly through the admin dashboard at `https://port.yourcompany.com`.
 
 ---
 
