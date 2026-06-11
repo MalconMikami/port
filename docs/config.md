@@ -1,8 +1,8 @@
-# Config Pública e Privada
+# Public and Private Config
 
-## O Modelo
+## The Model
 
-Cada site tem um objeto de configuração armazenado em duas colunas JSONB na tabela `port.sites`:
+Each site's configuration is stored in two JSONB columns on the `port.sites` table:
 
 ```sql
 CREATE TABLE port.sites (
@@ -11,102 +11,102 @@ CREATE TABLE port.sites (
   created_by VARCHAR(255),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
-  config_public JSONB DEFAULT '{}',   ← visível ao frontend
-  config_private JSONB DEFAULT '{}'   ← só no backend
+  config_public JSONB DEFAULT '{}',   ← visible to frontend
+  config_private JSONB DEFAULT '{}'   ← backend only
 );
 ```
 
-| Coluna | Visível no Frontend | Visível nas Functions | Exemplo de uso |
-|--------|-------------------|----------------------|----------------|
-| `config_public` | ✅ `port.config.get()` | ✅ `port.config.get()` | Tema, textos, URLs públicas |
-| `config_private` | ❌ | ✅ `port.config.private()` | API keys, senhas, endpoints internos |
+| Column | Visible in Frontend | Visible in Functions | Use case |
+|--------|-------------------|----------------------|----------|
+| `config_public` | ✅ `port.config.get()` | ✅ `port.config.get()` | Theme, text, public URLs |
+| `config_private` | ❌ | ✅ `port.config.private()` | API keys, passwords, internal endpoints |
 
 ---
 
-## Acesso via SDK (Frontend)
+## Access via SDK (Frontend)
 
 ```js
-// Ler config inteira
+// Read entire config
 const config = await window.port.config.get();
-// → { theme: { primaryColor: '#4361ee' }, siteName: 'Meu Site' }
+// → { theme: { primaryColor: '#4361ee' }, siteName: 'My Site' }
 
-// Ler chave específica (dot-notation)
-const cor = await window.port.config.get('theme.primaryColor');
+// Read specific key (dot-notation)
+const color = await window.port.config.get('theme.primaryColor');
 // → '#4361ee'
 
-// Chave aninhada
+// Nested key
 const borderRadius = await window.port.config.get('theme.borderRadius');
 // → '8px'
 ```
 
-> ⚠️ O frontend **não** tem acesso a `config_private`. A SDK não expõe `port.config.private()`.
+> ⚠️ The frontend **cannot** access `config_private`. The SDK does not expose `port.config.private()`.
 
 ---
 
-## Acesso via SDK (Server-Side Functions)
+## Access via SDK (Server-Side Functions)
 
-Nas functions, o SDK do servidor expõe ambos os objetos:
+In functions, the server-side SDK exposes both objects:
 
 ```js
-export async function enviarEmail({ para, mensagem }, { port }) {
-  // Config pública
+export async function sendEmail({ to, message }, { port }) {
+  // Public config
   const siteName = await port.config.get('siteName');
 
-  // Config privada — só o backend vê
+  // Private config — only the backend sees this
   const apiKey = await port.config.private('sendgrid.apiKey');
   const fromEmail = await port.config.private('email.from');
 
-  // Usa as configs
-  await sendEmail({ to: para, from: fromEmail, apiKey, content: mensagem });
+  // Use the configs
+  await sendEmail({ to, from: fromEmail, apiKey, content: message });
 }
 ```
 
 ---
 
-## Gerenciamento via API
+## Management via API
 
-Todas as rotas aceitam `?site={id}` para admin targeting (quando a requisição vem do dashboard, não de um subdomínio de site).
+All routes accept `?site={id}` for admin targeting (when the request comes from the dashboard, not a site subdomain).
 
-### Config Pública
+### Public Config
 
 ```bash
-# Criar / atualizar chave
-curl -X POST 'http://localhost:10000/api/config/theme.primaryColor?site=meu-site' \
+# Create / update key
+curl -X POST 'http://localhost:10000/api/config/theme.primaryColor?site=my-site' \
   -H 'Content-Type: application/json' \
   -d '{"value": "#4361ee"}'
 
-# Ler chave específica
-curl 'http://localhost:10000/api/config/theme.primaryColor?site=meu-site'
+# Read specific key
+curl 'http://localhost:10000/api/config/theme.primaryColor?site=my-site'
 # → "#4361ee"
 
-# Ler config inteira
-curl 'http://localhost:10000/api/config?site=meu-site'
+# Read entire config
+curl 'http://localhost:10000/api/config?site=my-site'
 # → { "theme": { "primaryColor": "#4361ee" }, ... }
 
-# Deletar chave
-curl -X DELETE 'http://localhost:10000/api/config/theme.primaryColor?site=meu-site'
+# Delete key
+curl -X DELETE 'http://localhost:10000/api/config/theme.primaryColor?site=my-site'
 ```
 
-### Config Privada (só backend)
+### Private Config (backend only)
 
 ```bash
-# Criar / atualizar
-curl -X POST 'http://localhost:10000/api/config/private/sendgrid.apiKey?site=meu-site' \
+# Create / update
+curl -X POST 'http://localhost:10000/api/config/private/sendgrid.apiKey?site=my-site' \
   -H 'Content-Type: application/json' \
   -d '{"value": "SG.xxxxx"}'
 
-# Ler
-curl 'http://localhost:10000/api/config/private/sendgrid.apiKey?site=meu-site'
+# Read
+curl 'http://localhost:10000/api/config/private/sendgrid.apiKey?site=my-site'
 
-# Deletar
-curl -X DELETE 'http://localhost:10000/api/config/private/sendgrid.apiKey?site=meu-site'
+# Delete
+curl -X DELETE 'http://localhost:10000/api/config/private/sendgrid.apiKey?site=my-site'
 ```
 
 ---
 
 ## Dot-Notation
 
-As chaves usam **dot-notation** para acessar propriedades aninhadas:
+Keys use **dot-notation** to access nested properties:
 
 ```json
 {
@@ -115,39 +115,39 @@ As chaves usam **dot-notation** para acessar propriedades aninhadas:
     "backgroundColor": "#ffffff",
     "borderRadius": "8px"
   },
-  "siteName": "Meu Site",
+  "siteName": "My Site",
   "social": {
-    "instagram": "@meusite",
-    "twitter": "@meusite"
+    "instagram": "@mysite",
+    "twitter": "@mysite"
   }
 }
 ```
 
-| Chave | Valor |
-|-------|-------|
+| Key | Value |
+|-----|-------|
 | `theme` | `{ primaryColor: "...", ... }` |
 | `theme.primaryColor` | `"#4361ee"` |
-| `social.instagram` | `"@meusite"` |
-| `theme` (deletar) | Remove o objeto inteiro |
-| `theme.borderRadius` (deletar) | Remove só essa chave |
+| `social.instagram` | `"@mysite"` |
+| `theme` (delete) | Removes the entire object |
+| `theme.borderRadius` (delete) | Removes only that key |
 
 ---
 
 ## Admin Dashboard
 
-O dashboard web (acessível em `http://localhost:10000`) permite editar ambas as configs via interface visual:
+The web dashboard (at `http://localhost:10000`) lets you edit both configs via the UI:
 
-- Tabela de sites com botão "Config"
-- Modal com dois editors JSON lado a lado: **Public** e **Private**
-- Salvamento via API com `?site={id}`
+- Sites table with a "Config" button per site
+- Modal with two JSON editors side by side: **Public** and **Private**
+- Saves via API with `?site={id}`
 
 ---
 
-## Casos de Uso
+## Use Cases
 
-### Tema Dinâmico
+### Dynamic Theme
 
-No `config_public`:
+In `config_public`:
 
 ```json
 {
@@ -161,7 +161,7 @@ No `config_public`:
 }
 ```
 
-No frontend:
+In the frontend:
 
 ```js
 const theme = await window.port.config.get('theme');
@@ -174,9 +174,9 @@ if (theme) {
 }
 ```
 
-### API Keys para Serviços Externos
+### API Keys for External Services
 
-No `config_private`:
+In `config_private`:
 
 ```json
 {
@@ -186,18 +186,18 @@ No `config_private`:
 }
 ```
 
-Nas functions:
+In functions:
 
 ```js
-export async function processarPagamento({ pedidoId }, { port }) {
+export async function processPayment({ orderId }, { port }) {
   const stripeKey = await port.config.private('stripe.secretKey');
-  // processa pagamento...
+  // process payment...
 }
 ```
 
-### Flag de Funcionalidade
+### Feature Flags
 
-No `config_public`:
+In `config_public`:
 
 ```json
 {
@@ -209,23 +209,23 @@ No `config_public`:
 }
 ```
 
-No frontend:
+In the frontend:
 
 ```js
 const features = await window.port.config.get('features');
 if (features.chat) {
-  // Mostrar botão de chat
+  // Show chat button
 }
 ```
 
 ---
 
-## Boas Práticas
+## Best Practices
 
-| Faça | Não Faça |
-|------|----------|
-| Use `config_public` para tudo que o frontend precisa ver | Coloque secrets no `config_public` |
-| Use `config_private` para API keys e senhas | Coloque dados grandes (> 100KB) no config |
-| Use dot-notation para organizar por domínio | Use caracteres especiais nas chaves |
-| Delete chaves não utilizadas | Dependa de config para dados transacionais |
-| Documente as chaves esperadas no README do site | Use o mesmo namespace para config pública e privada |
+| Do | Don't |
+|----|-------|
+| Use `config_public` for everything the frontend needs | Put secrets in `config_public` |
+| Use `config_private` for API keys and passwords | Put large data (> 100KB) in config |
+| Use dot-notation to organize by domain | Use special characters in key names |
+| Delete unused keys | Depend on config for transactional data |
+| Document expected keys in the site's README | Use the same namespace for public and private config |
