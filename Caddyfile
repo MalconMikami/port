@@ -1,0 +1,60 @@
+# Port — Caddy reverse proxy
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Substitua DOMAIN pelo seu domínio real (ex: port.xp.inc)
+# SSL é automático via Let's Encrypt
+
+DOMAIN.example.com {
+    # Admin dashboard + API
+    handle_path /api/* {
+        reverse_proxy api:3000
+    }
+
+    # SDK
+    handle_path /sdk/* {
+        reverse_proxy api:3000
+    }
+
+    # Health check
+    handle_path /api/health {
+        reverse_proxy api:3000
+    }
+
+    # WebSocket
+    handle_path /ws/* {
+        reverse_proxy api:3000
+    }
+
+    # Catch-all — serve sites via subdomain
+    @portHost host port.DOMAIN
+    handle @portHost {
+        reverse_proxy api:3000
+    }
+
+    # Unknown subdomain — fallback
+    handle {
+        reverse_proxy api:3000
+    }
+
+    # Logs
+    log {
+        output file /data/logs/access.log
+    }
+}
+
+# Redirect port.DOMAIN → DOMAIN
+port.DOMAIN {
+    redir https://DOMAIN{uri} 301
+}
+
+# All subdomains
+*.DOMAIN, DOMAIN {
+    @apiHost host api.DOMAIN
+    handle @apiHost {
+        reverse_proxy api:3000
+    }
+
+    handle {
+        reverse_proxy api:3000
+    }
+}

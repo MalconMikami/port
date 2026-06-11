@@ -1,0 +1,36 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "10000:3000"
+    volumes:
+      - sites_data:/data/sites
+      - uploads_data:/data/uploads
+      - ./api/src:/app/src
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    expose:
+      - "5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_DB: port
+      POSTGRES_PASSWORD: port_secret
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  sites_data:
+  uploads_data:
+  pg_data:

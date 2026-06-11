@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Port — Plataforma de Deploy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            port: { 50: '#ecfeff', 100: '#cffafe', 200: '#a5f3fc', 300: '#67e8f9', 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2', 700: '#0e7490', 800: '#155e75', 900: '#164e63', 950: '#083344' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="app"></div>
+
+  <script>
+  // ── State ──
+  let user = null;
+  let sites = [];
+
+  // ── API Helper ──
+  async function api(path, options = {}) {
+    const res = await fetch(path, {
+      ...options,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+    });
+    if (res.status === 401) { showLogin(); return null; }
+    if (!res.ok) { const err = await res.text(); throw new Error(err); }
+    return options.raw ? res : res.json();
+  }
+
+  // ── Router ──
+  async function init() {
+    const userData = await api('/api/identity/me');
+    if (!userData) { showLogin(); return; }
+    user = userData;
+    await loadDashboard();
+  }
+
+  // ── Landing Page (friendly deployment platform) ──
+  function showLogin() {
+    document.getElementById('app').innerHTML = `
+      <div class="min-h-screen flex flex-col">
+
+        <!-- Header -->
+        <header class="flex items-center justify-between px-6 py-4 border-b border-slate-800/50">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🚢</span>
+            <span class="text-xl font-bold text-white">Port</span>
+          </div>
+          <a href="/api/auth/login"
+             class="px-5 py-2 bg-port-600 hover:bg-port-500 text-white rounded-lg font-medium transition-all shadow-lg shadow-port-600/25">
+            Entrar
+          </a>
+        </header>
+
+        <!-- Hero -->
+        <main class="flex-1 flex flex-col items-center justify-center px-6 text-center">
+          <div class="max-w-2xl mx-auto space-y-8">
+            <div class="text-7xl mb-2">🚢</div>
+            <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight">
+              Sua plataforma de<br>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-port-400 to-cyan-300">deploy instantâneo</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-400 max-w-lg mx-auto leading-relaxed">
+              Arraste um ZIP, publíque em segundos. Sites estáticos, SPAs, dashboards — 
+              tudo rodando no seu próprio domínio com suporte a funções serverless.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <a href="/api/auth/login"
+                 class="px-8 py-4 bg-port-600 hover:bg-port-500 text-white rounded-xl font-semibold transition-all text-lg shadow-lg shadow-port-600/25 hover:shadow-port-500/40 hover:scale-105 active:scale-95">
+                → Entrar na Plataforma
+              </a>
+            </div>
+
+            <!-- Features -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 text-left">
+              <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                <div class="text-2xl mb-2">📦</div>
+                <h3 class="text-white font-semibold mb-1">Deploy por ZIP</h3>
+                <p class="text-sm text-slate-400">Arraste seu arquivo .zip e pronto. Sites no ar em segundos.</p>
+              </div>
+              <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                <div class="text-2xl mb-2">⚡</div>
+                <h3 class="text-white font-semibold mb-1">Funções Serverless</h3>
+                <p class="text-sm text-slate-400">Adicione lógica backend com funções JavaScript isoladas.</p>
+              </div>
+              <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                <div class="text-2xl mb-2">🔗</div>
+                <h3 class="text-white font-semibold mb-1">Subdomínio próprio</h3>
+                <p class="text-sm text-slate-400">Cada site ganha um subdomínio automaticamente.</p>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center py-6 text-xs text-slate-600 border-t border-slate-800/50">
+          Port — Plataforma Interna
+        </footer>
+      </div>
+    `;
+  }
+
+  // ── Dashboard ──
+  async function loadDashboard() {
+    try { sites = await api('/api/sites') || []; } catch { sites = []; }
+
+    const avatar = user.avatarUrl
+      ? `<img src="${user.avatarUrl}" class="w-8 h-8 rounded-full">`
+      : `<div class="w-8 h-8 rounded-full bg-port-600 flex items-center justify-center text-sm font-bold">${user.name?.[0] || '?'}</div>`;
+
+    document.getElementById('app').innerHTML = `
+      <div class="max-w-5xl mx-auto px-4 py-8">
+        ${header(avatar)}
+
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Seus Sites</h2>
+            <p class="text-slate-400 text-sm mt-1">${sites.length} site${sites.length !== 1 ? 's' : ''} publicado${sites.length !== 1 ? 's' : ''}</p>
+          </div>
+          <button onclick="openCreateModal()"
+                  class="px-5 py-2.5 bg-port-600 hover:bg-port-500 text-white rounded-lg font-medium transition-all shadow-lg shadow-port-600/25">
+            + Novo Site
+          </button>
+        </div>
+
+        ${sites.length === 0 ? emptyState() : sitesTable()}
+      </div>
+
+      ${createModal()}
+      ${configModal()}
+      <div id="toast" class="fixed bottom-6 right-6 z-50"></div>
+    `;
+  }
+
+  function header(avatar) {
+    return `
+      <div class="flex items-center justify-between mb-10 pb-6 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🚢</span>
+          <span class="text-2xl font-bold text-white">Port</span>
+          <span class="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">internal</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <p class="text-sm text-white font-medium">${user?.name || ''}</p>
+            <p class="text-xs text-slate-400">${user?.email || ''}</p>
+          </div>
+          ${avatar}
+          <a href="/api/auth/logout" class="text-xs text-slate-500 hover:text-slate-300 transition-colors" title="Sair">sair</a>
+        </div>
+      </div>
+    `;
+  }
+
+  function emptyState() {
+    return `
+      <div class="text-center py-20 border-2 border-dashed border-slate-700 rounded-2xl">
+        <div class="text-5xl mb-4">📭</div>
+        <h3 class="text-xl font-semibold text-slate-300 mb-2">Nenhum site ainda</h3>
+        <p class="text-slate-500 mb-6">Crie seu primeiro site arrastando um ZIP</p>
+        <button onclick="openCreateModal()" class="px-6 py-3 bg-port-600 hover:bg-port-500 text-white rounded-lg font-medium transition-all">🚀 Criar primeiro site</button>
+      </div>
+    `;
+  }
+
+  function sitesTable() {
+    return `
+      <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+        <table class="w-full">
+          <thead>
+            <tr class="text-left text-xs text-slate-500 uppercase tracking-wider border-b border-slate-800">
+              <th class="px-6 py-4">Site</th>
+              <th class="px-6 py-4">URL</th>
+              <th class="px-6 py-4">Criado por</th>
+              <th class="px-6 py-4">Data</th>
+              <th class="px-6 py-4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sites.map(s => `
+              <tr class="border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors">
+                <td class="px-6 py-4">
+                  <span class="flex items-center gap-2">
+                    <span class="text-lg">📁</span>
+                    <span class="font-medium text-white">${s.name}</span>
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <a href="${window.location.protocol}//${s.id}.${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}" target="_blank"
+                     class="text-port-400 hover:text-port-300 text-sm underline underline-offset-2">
+                    ${s.id}.${window.location.hostname}${window.location.port ? ':' + window.location.port : ''} ↗
+                  </a>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-400">${s.created_by || '—'}</td>
+                <td class="px-6 py-4 text-sm text-slate-400">${new Date(s.created_at).toLocaleDateString('pt-BR')}</td>
+                <td class="px-6 py-4 text-right space-x-2">
+                  <button onclick="openConfigModal('${s.id}')" class="text-xs text-port-400 hover:text-port-300 transition-colors">config</button>
+                  <button onclick="deleteSite('${s.id}')" class="text-xs text-red-400 hover:text-red-300 transition-colors">excluir</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // ── Create Modal ──
+  function createModal() {
+    return `
+      <div id="createModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-40">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 w-full max-w-lg mx-4 p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white">🚀 Novo Site</h3>
+            <button onclick="closeCreateModal()" class="text-slate-500 hover:text-slate-300 text-xl">&times;</button>
+          </div>
+
+          <div class="space-y-5">
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-1.5">Nome do site</label>
+              <div class="flex items-center gap-1 text-sm text-slate-500">
+                <span>https://</span>
+                <input id="siteName" type="text" placeholder="meu-site" maxlength="30"
+                       oninput="validateName(this)"
+                       class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:border-port-500 focus:ring-1 focus:ring-port-500 outline-none">
+                <span>.${window.location.hostname}</span>
+              </div>
+              <p id="nameError" class="text-xs text-red-400 mt-1 hidden"></p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-1.5">Arquivo ZIP</label>
+              <div id="dropzone"
+                   class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center hover:border-port-500 transition-colors cursor-pointer">
+                <div id="dropzoneContent">
+                  <div class="text-3xl mb-2">📦</div>
+                  <p class="text-slate-400">Arraste seu ZIP aqui<br>ou <span class="text-port-400 underline">clique para buscar</span></p>
+                  <p class="text-xs text-slate-600 mt-2">máx 50MB, apenas .zip</p>
+                </div>
+                <div id="filePreview" class="hidden">
+                  <div class="text-2xl mb-1">📄</div>
+                  <p id="fileName" class="text-white font-medium"></p>
+                  <p id="fileSize" class="text-sm text-slate-400"></p>
+                </div>
+                <input id="fileInput" type="file" accept=".zip" class="hidden" onchange="handleFile(this)">
+              </div>
+            </div>
+
+            <button id="submitBtn" disabled
+                    onclick="deploySite()"
+                    class="w-full py-3 bg-port-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-semibold transition-all disabled:cursor-not-allowed hover:bg-port-500">
+              🚀 Publicar!
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  let selectedFile = null;
+
+  function openCreateModal() {
+    selectedFile = null;
+    document.getElementById('siteName').value = '';
+    document.getElementById('nameError').classList.add('hidden');
+    document.getElementById('filePreview').classList.add('hidden');
+    document.getElementById('dropzoneContent').classList.remove('hidden');
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('createModal').classList.remove('hidden');
+    document.getElementById('createModal').classList.add('flex');
+  }
+
+  // ── Config Modal ──
+  let selectedSiteForConfig = null;
+
+  function configModal() {
+    return `
+      <div id="configModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-40">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 w-full max-w-2xl mx-4 p-8 max-h-[85vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white">⚙️ Config: <span id="configSiteName" class="text-port-400"></span></h3>
+            <button onclick="closeConfigModal()" class="text-slate-500 hover:text-slate-300 text-xl">&times;</button>
+          </div>
+
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-1.5">🔓 Public Config</label>
+              <p class="text-xs text-slate-500 mb-2">Acessível do frontend e das functions</p>
+              <textarea id="configPublicEditor" rows="12"
+                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-port-500 focus:ring-1 focus:ring-port-500 outline-none resize-y"></textarea>
+              <button onclick="saveConfig('public')" id="savePublicBtn"
+                      class="mt-2 px-4 py-2 bg-port-600 hover:bg-port-500 text-white rounded-lg text-sm transition-all">
+                💾 Salvar Public
+              </button>
+            </div>
+
+            <div class="border-t border-slate-800 pt-6">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1.5">🔒 Private Config</label>
+                <p class="text-xs text-slate-500 mb-2">Só acessível das functions (NUNCA vai pro browser)</p>
+                <textarea id="configPrivateEditor" rows="12"
+                  class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-port-500 focus:ring-1 focus:ring-port-500 outline-none resize-y"></textarea>
+                <button onclick="saveConfig('private')" id="savePrivateBtn"
+                        class="mt-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm transition-all">
+                  💾 Salvar Private
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function openConfigModal(siteId) {
+    selectedSiteForConfig = siteId;
+    document.getElementById('configSiteName').textContent = siteId;
+    document.getElementById('configModal').classList.remove('hidden');
+    document.getElementById('configModal').classList.add('flex');
+
+    try {
+      const pub = await api(`/api/config?site=${siteId}`, { raw: false }) || {};
+      document.getElementById('configPublicEditor').value = JSON.stringify(pub, null, 2);
+    } catch {
+      document.getElementById('configPublicEditor').value = '{}';
+    }
+
+    try {
+      const priv = await api(`/api/config/private?site=${siteId}`, { raw: false }) || {};
+      document.getElementById('configPrivateEditor').value = JSON.stringify(priv, null, 2);
+    } catch {
+      document.getElementById('configPrivateEditor').value = '{}';
+    }
+  }
+
+  function closeConfigModal() {
+    document.getElementById('configModal').classList.add('hidden');
+    document.getElementById('configModal').classList.remove('flex');
+    selectedSiteForConfig = null;
+  }
+
+  async function saveConfig(type) {
+    const isPrivate = type === 'private';
+    const editorId = isPrivate ? 'configPrivateEditor' : 'configPublicEditor';
+    const btnId = isPrivate ? 'savePrivateBtn' : 'savePublicBtn';
+    const btn = document.getElementById(btnId);
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Salvando...';
+
+    try {
+      const json = JSON.parse(document.getElementById(editorId).value);
+      const basePath = isPrivate ? '/api/config/private' : '/api/config';
+      const siteParam = `?site=${selectedSiteForConfig}`;
+
+      // Save each top-level key
+      for (const [key, value] of Object.entries(json)) {
+        await api(`${basePath}/${key}${siteParam}`, {
+          method: 'POST',
+          body: JSON.stringify({ value }),
+        });
+      }
+
+      toast(`✅ Config ${type} salva!`, 'success');
+    } catch (err) {
+      toast(`❌ ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = isPrivate ? '💾 Salvar Private' : '💾 Salvar Public';
+    }
+  }
+
+  function closeCreateModal() {
+    document.getElementById('createModal').classList.add('hidden');
+    document.getElementById('createModal').classList.remove('flex');
+  }
+
+  function validateName(input) {
+    const val = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    input.value = val;
+    const error = document.getElementById('nameError');
+    if (val.length < 3) {
+      error.textContent = 'Mínimo 3 caracteres';
+      error.classList.remove('hidden');
+    } else if (!/^[a-z0-9-]+$/.test(val)) {
+      error.textContent = 'Apenas letras, números e hífens';
+      error.classList.remove('hidden');
+    } else {
+      error.classList.add('hidden');
+    }
+    updateSubmitBtn();
+  }
+
+  function handleFile(input) {
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.zip')) { toast('Apenas arquivos .zip', 'error'); return; }
+    if (file.size > 50 * 1024 * 1024) { toast('Arquivo muito grande (máx 50MB)', 'error'); return; }
+    selectedFile = file;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    document.getElementById('dropzoneContent').classList.add('hidden');
+    document.getElementById('filePreview').classList.remove('hidden');
+    updateSubmitBtn();
+  }
+
+  function updateSubmitBtn() {
+    const name = document.getElementById('siteName').value;
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = !(name.length >= 3 && selectedFile);
+  }
+
+  async function deploySite() {
+    const name = document.getElementById('siteName').value;
+    if (!name || !selectedFile) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Publicando...';
+
+    try {
+      const form = new FormData();
+      form.append('siteName', name);
+      form.append('zipFile', selectedFile);
+
+      const res = await fetch('/api/sites', {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+      });
+
+      if (!res.ok) { const err = await res.text(); throw new Error(err); }
+      const data = await res.json();
+
+      closeCreateModal();
+      toast(`🎉 Live em ${data.url}`, 'success');
+      await loadDashboard();
+    } catch (err) {
+      toast(`❌ ${err.message}`, 'error');
+      btn.disabled = false;
+      btn.textContent = '🚀 Publicar!';
+    }
+  }
+
+  // ── Delete ──
+  async function deleteSite(name) {
+    if (!confirm(`Excluir "${name}"? Essa ação é irreversível.`)) return;
+    try {
+      await api(`/api/sites/${name}`, { method: 'DELETE' });
+      toast(`🗑️ "${name}" excluído`, 'info');
+      await loadDashboard();
+    } catch (err) {
+      toast(`❌ Erro: ${err.message}`, 'error');
+    }
+  }
+
+  // ── Toast ──
+  function toast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    const colors = { success: 'bg-emerald-600', error: 'bg-red-600', info: 'bg-slate-700' };
+    const el = document.createElement('div');
+    el.className = `${colors[type]} text-white px-5 py-3 rounded-lg shadow-lg animate-bounce`;
+    el.textContent = msg;
+    t.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  // ── Dropzone drag-and-drop ──
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const dropzone = document.getElementById('dropzone');
+      if (!dropzone) return;
+      dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('border-port-400'); });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-port-400'));
+      dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.classList.remove('border-port-400');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          handleFile({ files: e.dataTransfer.files });
+        }
+      });
+      dropzone.addEventListener('click', () => document.getElementById('fileInput').click());
+    }, 100);
+  });
+
+  // ── Start ──
+  init();
+  </script>
+</body>
+</html>

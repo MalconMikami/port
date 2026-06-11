@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bella Casa - Decoração & Design</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Georgia', serif; line-height: 1.7; color: #2d2d2d; background: #fdfaf6; }
+    .top-bar {
+      background: #2d2d2d; color: #f5e6d3; padding: 12px 20px; text-align: center;
+      font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;
+    }
+    header {
+      padding: 40px 20px; text-align: center; border-bottom: 1px solid #e8ddd0;
+    }
+    header h1 { font-size: 2.4rem; color: #2d2d2d; margin-bottom: 4px; }
+    header p { color: #a0897a; font-style: italic; }
+    .gallery { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+    .gallery h2 { text-align: center; font-size: 1.6rem; margin-bottom: 32px; color: #2d2d2d; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .item {
+      background: white; border-radius: 4px; overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee5db;
+    }
+    .item .img-placeholder {
+      height: 200px; background: linear-gradient(135deg, #f5e6d3, #e8ddd0);
+      display: flex; align-items: center; justify-content: center;
+      color: #a0897a; font-size: 2rem;
+    }
+    .item .info { padding: 16px; }
+    .item .info h3 { font-size: 1.1rem; margin-bottom: 4px; }
+    .item .info p { color: #a0897a; font-size: 0.9rem; }
+    .item .info .price { font-size: 1.2rem; color: #8b6914; font-weight: bold; margin-top: 8px; }
+    .about {
+      background: #f5f0ea; padding: 60px 20px; text-align: center; margin-top: 40px;
+    }
+    .about h2 { font-size: 1.6rem; margin-bottom: 16px; }
+    .about p { max-width: 600px; margin: 0 auto; color: #666; }
+    footer {
+      text-align: center; padding: 24px; color: #a0897a; font-size: 0.85rem;
+      border-top: 1px solid #e8ddd0;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">Frete Grátis para todo o Brasil | Parcele em até 12x</div>
+
+  <header>
+    <h1>Bella Casa</h1>
+    <p>Decoração & Design com alma artesanal</p>
+  </header>
+
+  <section class="gallery">
+    <h2>🌿 Novidades</h2>
+    <div class="grid">
+      <div class="item">
+        <div class="img-placeholder">🪴</div>
+        <div class="info">
+          <h3>Vaso Artesanal Cerâmica</h3>
+          <p>Feito à mão por artesãs do interior de SP</p>
+          <div class="price">R$ 189,00</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="img-placeholder">🕯️</div>
+        <div class="info">
+          <h3>Vela Aromática Lavanda</h3>
+          <p>Cera 100% natural, 60h de queima</p>
+          <div class="price">R$ 79,00</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="img-placeholder">🖼️</div>
+        <div class="info">
+          <h3>Quadro Botânico</h3>
+          <p>Ilustração impressa em papel algodão</p>
+          <div class="price">R$ 149,00</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about">
+    <h2>Nossa História</h2>
+    <p>Desde 2018 selecionamos peças que contam histórias. Cada item da Bella Casa é escolhido à mão para trazer aconchego e personalidade ao seu lar.</p>
+  </section>
+
+  <footer>
+    <p>© 2026 Bella Casa Design — feito com ❤️ para lares brasileiros</p>
+  </footer>
+</body>
+</html>

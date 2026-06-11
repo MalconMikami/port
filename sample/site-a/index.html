@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alpha Tech - Soluções Inteligentes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #1a1a2e; background: #f8f9fc; }
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white; padding: 80px 20px; text-align: center;
+    }
+    .hero h1 { font-size: 2.8rem; margin-bottom: 16px; }
+    .hero p { font-size: 1.2rem; opacity: 0.85; max-width: 600px; margin: 0 auto; }
+    .container { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 40px; }
+    .card {
+      background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .card h3 { font-size: 1.3rem; margin-bottom: 8px; color: #1a1a2e; }
+    .card p { color: #555; }
+    .cta {
+      display: inline-block; background: #4361ee; color: white; padding: 12px 32px;
+      border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px;
+    }
+    footer { text-align: center; padding: 32px; color: #888; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>Alpha Tech</h1>
+    <p>Transformamos ideias em soluções digitais inteligentes.</p>
+  </section>
+
+  <div class="container">
+    <h2 style="text-align:center;font-size:1.8rem;">Nossos Serviços</h2>
+    <div class="features">
+      <div class="card">
+        <h3>💻 Desenvolvimento Web</h3>
+        <p>Criamos aplicações modernas e responsivas sob medida para o seu negócio.</p>
+      </div>
+      <div class="card">
+        <h3>📱 Aplicativos Mobile</h3>
+        <p>Apps nativos e híbridos com performance e experiência de usuário excepcionais.</p>
+      </div>
+      <div class="card">
+        <h3>☁️ Cloud & DevOps</h3>
+        <p>Infraestrutura escalável na nuvem com automação e monitoramento contínuo.</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:32px;">
+      <a href="#" class="cta">Solicite um Orçamento</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2026 Alpha Tech. Todos os direitos reservados.</p>
+  </footer>
+</body>
+</html>

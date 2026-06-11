@@ -1,0 +1,13 @@
+{
+  "name": "@xp/port-sdk",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "port.js",
+  "exports": {
+    ".": {
+      "import": "./port.js",
+      "default": "./port.js"
+    }
+  },
+  "description": "Client SDK for Port internal hosting platform"
+}
