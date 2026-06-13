@@ -9,5 +9,14 @@
       "default": "./port.js"
     }
   },
-  "description": "Client SDK for Port internal hosting platform"
+  "description": "Client SDK for Port internal hosting platform",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.0.0",
+    "vitest": "^2.0.0"
+  }
 }
